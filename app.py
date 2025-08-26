@@ -1024,8 +1024,10 @@ def migrate_database():
 
 if __name__ == '__main__':
     init_database()
-    migrate_database()
-    load_excel_data()  # Use real Excel data instead of sample data
+    if os.environ.get('RUN_MIGRATIONS', 'false').lower() == 'true':
+        migrate_database()
+    if os.environ.get('LOAD_EXCEL', 'false').lower() == 'true':
+        load_excel_data()  # Use real Excel data if explicitly enabled
     
     print("🚀 Pension Management System Backend Started!")
     print("📊 Dashboard API: http://localhost:5000/api/dashboard/stats")

@@ -10,5 +10,9 @@ services:
         value: 3.11.0
       - key: PORT
         value: 10000
+      - key: RUN_MIGRATIONS
+        value: false
+      - key: LOAD_EXCEL
+        value: false
     autoDeploy: true
 
