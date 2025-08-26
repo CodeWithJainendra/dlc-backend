@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 import sqlite3
 import os
 from typing import Dict, List, Any
+from werkzeug.utils import secure_filename
 try:
     import pandas as pd  # Optional for local/dev
 except Exception:
@@ -31,6 +32,15 @@ CORS(app)  # Enable CORS for Vue.js frontend
 
 # Database setup
 DB_PATH = os.getenv('DB_PATH', 'pension_data.db')
+
+# Uploads setup
+UPLOAD_DIR = os.getenv('UPLOAD_DIR', 'uploads')
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+ALLOWED_EXTENSIONS = {'.json', '.xml', '.xlsx'}
+
+def is_allowed_file(filename: str) -> bool:
+    _, ext = os.path.splitext(filename.lower())
+    return ext in ALLOWED_EXTENSIONS
 
 def init_database():
     """Initialize SQLite database with sample data"""
@@ -638,6 +648,34 @@ def get_bar_chart_race_data():
         'title': 'State-wise Pension Verifications Over Time',
         'periods': months
     })
+
+@app.route('/api/upload', methods=['POST'])
+def upload_file():
+    """Upload JSON/XML/Excel files. Save to UPLOAD_DIR and return metadata."""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part in request'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    filename = secure_filename(file.filename)
+    if not is_allowed_file(filename):
+        return jsonify({'error': 'Unsupported file type'}), 400
+
+    save_path = os.path.join(UPLOAD_DIR, filename)
+    file.save(save_path)
+
+    size_bytes = os.path.getsize(save_path)
+    _, ext = os.path.splitext(filename.lower())
+    kind = 'json' if ext == '.json' else 'xml' if ext == '.xml' else 'excel'
+
+    return jsonify({
+        'filename': filename,
+        'path': save_path,
+        'sizeBytes': size_bytes,
+        'type': kind,
+        'uploadedAt': datetime.now().isoformat()
+    }), 201
 
 def get_state_from_pincode(pincode):
     """Get state from pincode using first 3 digits"""
