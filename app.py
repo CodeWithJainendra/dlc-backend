@@ -42,6 +42,25 @@ def is_allowed_file(filename: str) -> bool:
     _, ext = os.path.splitext(filename.lower())
     return ext in ALLOWED_EXTENSIONS
 
+@app.route('/', methods=['GET'])
+def root():
+    return jsonify({
+        'service': 'dlc-backend',
+        'status': 'ok',
+        'time': datetime.now().isoformat()
+    })
+
+@app.route('/healthz', methods=['GET'])
+def healthz():
+    try:
+        # simple DB check
+        conn = sqlite3.connect(DB_PATH)
+        conn.execute('SELECT 1')
+        conn.close()
+        return jsonify({'status': 'healthy'}), 200
+    except Exception as e:
+        return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
+
 def init_database():
     """Initialize SQLite database with sample data"""
     conn = sqlite3.connect(DB_PATH)
