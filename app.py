@@ -30,7 +30,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for Vue.js frontend
 
 # Database setup
-DB_PATH = 'pension_data.db'
+DB_PATH = os.getenv('DB_PATH', 'pension_data.db')
 
 def init_database():
     """Initialize SQLite database with sample data"""
